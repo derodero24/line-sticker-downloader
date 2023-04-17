@@ -1,14 +1,19 @@
 const path = require("path");
 const chalk = require("chalk");
 const puppeteer = require("puppeteer");
-const makeDir = require("make-dir");
 const downloadImage = require("image-downloader").image;
 const ora = require("ora");
 const apng2gif = require("apng2gif");
+const fs = require("fs");
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function createContext(config) {
-  const { url, dest = "stickers", animatedWaitDelay, convertToGif } = config;
+  const {
+    url,
+    dest = path.join(process.cwd(), "stickers"),
+    animatedWaitDelay,
+    convertToGif,
+  } = config;
 
   return {
     spinner: ora("Downloading stickers..."),
@@ -59,6 +64,7 @@ async function scrapeStickerUrls(context) {
       );
     }
     stickerUrls.push(url);
+    break;
   }
 
   browser.close();
@@ -79,7 +85,9 @@ async function downloadStickers(config = {}) {
     let urls = await scrapeStickerUrls(context);
     urls = Array.from(new Set(urls));
 
-    await makeDir(dest);
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
 
     context.spinner.text = `Downloading ${urls.length} stickers...`;
     await Promise.all(
